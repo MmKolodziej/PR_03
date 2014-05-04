@@ -32,18 +32,18 @@ int main (int argc, char **argv)
     int rank, size;
     int n, k, i, local_sum = 0, global_sum = -1;
     char mapa_def[] = "./mapa.txt";
-	char* mapa = mapa_def;
+    char* mapa = mapa_def;
 
-    n = 4; 
-    k = 3; 
+    n = 4;
+    k = 3;
 
     if(argc >= 4)
         mapa = (char *)argv[3];
     if (argc >= 3)
-        k = atoi(argv[2]);        
+        k = atoi(argv[2]);
     if (argc >= 2)
-        n = atoi(argv[1]);       
-    
+        n = atoi(argv[1]);
+
     // Inicjalizacja środowiska
     MPI_Init(&argc, &argv);
     size = COMM_WORLD.Get_size();
@@ -84,7 +84,7 @@ int main (int argc, char **argv)
     }
 
     cout << "I'm Finder number " << rank << ". Now I'm waiting for instructions from Commander." << endl;
-    COMM_WORLD.Scatter(&allPoints, k, mapPoint, &points, k, mapPoint, 0); 
+    COMM_WORLD.Scatter(&allPoints, k, mapPoint, &points, k, mapPoint, 0);
 
     for(i = 0; i < k; i++)
     {
@@ -96,17 +96,17 @@ int main (int argc, char **argv)
         }
         else // Jeśli nie ma, ustawiam daną lokację na null - (0,0)
         {
-            points[i].X = 0; 
+            points[i].X = 0;
             points[i].Y = 0;
         }
     }
 
     // Dowódca zbiera (sumuje) od Poszukiwaczy informacje o liczbie znalezionych wraków
-    COMM_WORLD.Reduce(&local_sum, &global_sum, 1, MPI_INT, MPI_SUM, 0); 
+    COMM_WORLD.Reduce(&local_sum, &global_sum, 1, MPI_INT, MPI_SUM, 0);
 
     // Dowódca zbiera od każdego Poszukiwacza k lokacji (wysłanych wcześniej), które zawierają informacje o istnieniu wraku
-    COMM_WORLD.Gather(&points, k, mapPoint, &allPoints, k, mapPoint, 0); 
-    
+    COMM_WORLD.Gather(&points, k, mapPoint, &allPoints, k, mapPoint, 0);
+
 	if(rank == 0) // Dowódca
     {
         cout << "Wrecks found: " << global_sum << endl;
@@ -134,13 +134,13 @@ void readMap(char * input, coords* tab)
 	//char* line;
 	int i = 0;
 	int a,b;
-	
+
 	while(!feof(f)) {
 		fscanf(f, "%d, %d\n", &a, &b);
 		tab[i].X = a;
 		tab[i].Y = b;
 		i++;
 	}
-	
+
 	fclose(f);
 }

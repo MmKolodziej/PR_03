@@ -1,34 +1,21 @@
-CC=mpicc
-C_FLAGS=-Wall  -g
+CC=mpiCC
+C_FLAGS=-Wall -g
 L_FLAGS=-lm -lrt
+TARGET=treasure_hunt
+FILES=treasure_hunt.o
+SOURCE=treasure_hunt.cpp
 HOSTFILE=hosts
-PROGRAM=zad3
 
-ifeq ($(strip $(plik)),)
-  plik := ./mapa
-endif
+${TARGET}: ${FILES}
+	${CC} -o ${TARGET} ${FILES} ${L_FLAGS}
 
-SOURCES=$(wildcard *.c)
-BINARIES=$(SOURCES:%.c=%.o)
-
-all: $(PROGRAM)
-
-$(PROGRAM): $(BINARIES)
-	$(CC) -o $@ $^ $(C_FLAGS)
-
-%.c.o: %.c
-	$(CC) -c -o $@ $< $(C_FLAGS)
+${FILES}: ${SOURCE}
+	${CC} -o ${FILES} -c ${SOURCE} ${C_FLAGS}
 
 .PHONY: clean run
 
-compile: all
-
-run: all
-	mpirun -n $(n) --hostfile ${HOSTFILE} ./${PROGRAM} $(plik)
-
-debug: 
-	mpirun -n $(n) --debug --hostfile ${HOSTFILE} ./${PROGRAM} $(plik)
+run:
+	mpirun --hostfile ${HOSTFILE} ./${TARGET} $(n) $(k) $(mapa)
 
 clean:
-	-rm -f *.o $(PROGRAM)
- 
+	-rm -f ${FILES} ${TARGET}
