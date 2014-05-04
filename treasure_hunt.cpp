@@ -31,10 +31,16 @@ int main (int argc, char **argv)
     k = atoi(argv[2]);
     mapa_file = argv[3];
   }
+  int size, rank;
   location* points;
-  points = parseMap(mapa_file,n,k);
-  for (int i=0; i<n*k; i++){
-    cout points[i].x << " " << points[i].y << endl;
+  MPI_Init(&argc, &argv);
+  size = COMM_WORLD.Get_size();
+  rank = COMM_WORLD.Get_rank();
+  if (rank==0){
+    points = parseMap(mapa_file,n,k);
+    int i = 0;
+    for (i=0; i<n*k; i++)
+      cout points[i].x << " " << points[i].y << endl;
   }
   return 0;
 }
