@@ -78,7 +78,7 @@ int main (int argc, char **argv)
     if(searchForWreckage()) // Jeśli wrak jest, zwiększam wartość znalezionych wraków
     {
       currentWreckagesCount++;
-      cout << "Poszukiwacz " << rank << " znalazl wrak w " << pointToString(points[i]) << endl;
+      cout << "\033[1;31mPoszukiwacz " << rank << " znalazl wrak w " << pointToString(points[i]) << "\033[0m\n";
     }
     else // Jeśli nie ma, ustawiam daną lokację na null - (0,0)
     {
@@ -90,7 +90,7 @@ int main (int argc, char **argv)
 
   MPI_Barrier(COMM_WORLD);
   if (rank==0) {
-    cout<<"Wszyscy poszukiwacze wrocili. Podsumowuje poszukiwania:"<<endl;
+    cout<<"\033[1;31mWszyscy poszukiwacze wrocili. Podsumowuje poszukiwania:\033[0m\n";
   }
 
 // Dowódca zbiera (sumuje) od Poszukiwaczy informacje o liczbie znalezionych wraków
