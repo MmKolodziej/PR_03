@@ -64,9 +64,9 @@ location* parseMap(char * input, int n, int k)
   while(!feof(f)) {
     fscanf(f, "%d, %d\n", &a, &b);
     points[i].x = a;
-    cout << "a: " << endl;
+    cout << "a: " << a << endl;
     points[i].y = b;
-    cout << "b: " << endl;
+    cout << "b: " << b << endl;
     i++;
   }
   fclose(f);
