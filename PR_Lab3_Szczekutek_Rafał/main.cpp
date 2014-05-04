@@ -29,6 +29,7 @@ vector<point> readTreasureMap(char *);
 void readMap(char * input, point* tab);
 void AddMPIPointType();
 void FreeMPIPointType();
+char* pointToString(point);
 
 int main (int argc, char **argv)
 {
@@ -79,11 +80,11 @@ int main (int argc, char **argv)
 
     for(i = 0; i < k; i++)
     {
-        cout << "Finder " << rank << " checks a place " << i << ": " << locationToString(points[i]) << endl;
+        cout << "Finder " << rank << " checks a place " << i << ": " << pointToString(points[i]) << endl;
         if(found()) // Jeśli wrak jest, zwiększam wartość znalezionych wraków
         {
             local_sum++;
-            cout << "Finder " << rank << " reports: wreck at " << locationToString(points[i]) << endl;
+            cout << "Finder " << rank << " reports: wreck at " << pointToString(points[i]) << endl;
         }
         else // Jeśli nie ma, ustawiam daną lokację na null - (0,0)
         {
@@ -103,7 +104,7 @@ int main (int argc, char **argv)
         cout << "Wrecks found: " << global_sum << endl;
         for(i = 0; i < n*k; i++)
             if(allPoints[i].x != 0 || allPoints[i].y != 0)
-                cout << "Wreck "<< i << ": " << locationToString(allPoints[i]) <<endl;
+                cout << "Wreck "<< i << ": " << pointToString(allPoints[i]) <<endl;
     }
     FreeMPIPointType();
     Finalize();
@@ -121,7 +122,7 @@ char* getParamValue(char *s) {
     return v[1];
 }
 
-char* locationToString(location loc){
+char* pointToString(point loc){
   stringstream ss;
   ss << "(" << loc.x << "," << loc.y << ")";
   return ss.str();
