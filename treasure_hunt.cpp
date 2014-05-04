@@ -33,7 +33,9 @@ int main (int argc, char **argv)
   }
   location* points;
   points = parseMap(mapa_file,n,k);
-
+  for (int i=0; i<n*k; i++){
+    cout points[i].x << " " << points[i].y << endl;
+  }
   return 0;
 }
 
@@ -56,7 +58,6 @@ location* parseMap(char * input, int n, int k)
     fscanf(f, "%d, %d\n", &a, &b);
     points[i].x = a;
     points[i].y = b;
-    cout << a << " " << b << endl;
     i++;
   }
   fclose(f);
