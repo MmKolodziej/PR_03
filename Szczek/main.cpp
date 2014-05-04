@@ -30,7 +30,7 @@ int main (int argc, char **argv)
 {
   int rank, size;
   int i;
-  int currentWreckageCount, allWreckageCount;
+  int currentWreckagesCount, allWreckagesCount;
 
   if (argc!=4){
   	cout<<"Nieprawidlowa liczba parametrow. Poprawne uzycie ./main n=[n] k=[k] mapa=[mapa]"<<endl;
@@ -77,7 +77,7 @@ int main (int argc, char **argv)
     cout << "Poszukiwacz " << rank << " sprawdza miejsce " << pointToString(points[i]) << endl;
     if(searchForWreckage()) // Jeśli wrak jest, zwiększam wartość znalezionych wraków
     {
-      currentWreckageCount++;
+      currentWreckagesCount++;
       cout << "Poszukiwacz " << rank << " znalazl wrak w " << pointToString(points[i]) << endl;
     }
     else // Jeśli nie ma, ustawiam daną lokację na null - (0,0)
@@ -94,7 +94,7 @@ int main (int argc, char **argv)
   }
 
 // Dowódca zbiera (sumuje) od Poszukiwaczy informacje o liczbie znalezionych wraków
-  MPI_Reduce(&local_sum, &allWreckageCount, 1, MPI_INT, MPI_SUM, 0, COMM_WORLD);
+  MPI_Reduce(&currentWreckagesCount, &allWreckagesCount, 1, MPI_INT, MPI_SUM, 0, COMM_WORLD);
 
   // Dowódca zbiera od każdego Poszukiwacza k lokacji (wysłanych wcześniej), które zawierają informacje o istnieniu wraku
   MPI_Gather(&points, k, mapPoint, &allPoints, k, mapPoint, 0, COMM_WORLD);
