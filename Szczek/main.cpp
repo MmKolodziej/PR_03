@@ -10,10 +10,9 @@
 #include <time.h>
 #include <vector>
 
-using namespace MPI;
 using namespace std;
 
-MPI_Datatype mapPoint;
+MPI_Datatype MPIPoint;
 
 struct point{
     int x,y;
@@ -45,7 +44,6 @@ int main (int argc, char **argv)
   point allPoints[n*k]; // Tablica struktur, w której zostaną umieszczone wszyskie lokacje z pliku wejściowego 'mapa' - tam gdzie nie ma wraku jest (0,0)
   vector<point> v;
 
-
    // Inicjalizacja MPI
   MPI_Init(&argc, &argv);
   MPI_Comm_rank( MPI_COMM_WORLD, &rank ); //numer procesu
@@ -71,7 +69,7 @@ int main (int argc, char **argv)
   }
 
   //Rozeslij po k lokalizacji do kazdego z poszukiwaczy
-  MPI_Scatter(&allPoints, k, mapPoint, &currentPoints, k, mapPoint, 0, COMM_WORLD);
+  MPI_Scatter(&allPoints, k, MPIPoint, &currentPoints, k, MPIPoint, 0, MPI_COMM_WORLD);
 
   for(i = 0; i < k; i++)
   {
@@ -89,16 +87,16 @@ int main (int argc, char **argv)
   }
 
 
-  MPI_Barrier(COMM_WORLD);
+  MPI_Barrier(MPI_COMM_WORLD);
   if (rank==0) {
     cout<<"\033[1;34mWszyscy poszukiwacze wrocili. Podsumowuje poszukiwania:\033[0m\n";
   }
 
  // Dowódca zbiera (sumuje) od Poszukiwaczy informacje o liczbie znalezionych wraków
-  MPI_Reduce(&currentWreckagesCount, &allWreckagesCount, 1, MPI_INT, MPI_SUM, 0, COMM_WORLD);
+  MPI_Reduce(&currentWreckagesCount, &allWreckagesCount, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 
   // Dowódca zbiera od każdego Poszukiwacza k lokacji (wysłanych wcześniej), które zawierają informacje o istnieniu wraku
-  MPI_Gather(&currentPoints, k, mapPoint, &allPoints, k, mapPoint, 0, COMM_WORLD);
+  MPI_Gather(&currentPoints, k, MPIPoint, &allPoints, k, MPIPoint, 0, MPI_COMM_WORLD);
 
   if(rank == 0) // Dowódca
   {
@@ -137,18 +135,18 @@ void AddMPIPointType()
   MPI_Datatype type[2] = { MPI_INT, MPI_INT }; // Typy w strukturze
   int blocklen[2] = { 1, 1 }; // Ilość każdego ww typu w strukturze
 
-  Aint disp[2] = { // Przesunięcie w pamięci dla struktury
+  MPI_Aint disp[2] = { // Przesunięcie w pamięci dla struktury
     offsetof(point, x),
     offsetof(point, y)
   };
 
-  MPI_Type_struct(2, blocklen, disp, type, &mapPoint);
-  MPI_Type_commit(&mapPoint); // Od tej pory w programie dostępny jest typ 'mapPoint'
+  MPI_Type_struct(2, blocklen, disp, type, &MPIPoint);
+  MPI_Type_commit(&MPIPoint); // Od tej pory w programie dostępny jest typ 'MPIPoint'
 }
 
 void FreeMPIPointType()
 {
-  MPI_Type_free(&mapPoint);
+  MPI_Type_free(&MPIPoint);
 }
 
 // znajdujemy z prawdopodobieństwem 20% wraku w losowym czasie
