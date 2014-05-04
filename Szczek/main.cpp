@@ -31,94 +31,90 @@ string pointToString(point);
 
 int main (int argc, char **argv)
 {
-    int rank, size;
-    int i, local_sum = 0, global_sum = -1;
- 
-    if (argc!=4){
-	cout<<"Nieprawidlowa liczba parametrow. Poprawne uzycie ./main n=[n] k=[k] mapa=[mapa]"<<endl;
-	return 0;
-    }
+  int rank, size;
+  int i, local_sum = 0, global_sum = -1;
 
-    int n = atoi(getParamValue(argv[1]));
-    int k = atoi(getParamValue(argv[2]));
-    char *mapa = getParamValue(argv[3]);
-    cout<<"n:"<<n<<" , k:"<<k<<" , mapa:"<<mapa<<endl;
+  if (argc!=4){
+  	cout<<"Nieprawidlowa liczba parametrow. Poprawne uzycie ./main n=[n] k=[k] mapa=[mapa]"<<endl;
+    MPI_Finalize();
+  	return 0;
+  }
 
-    // Inicjalizacja MPI
-    MPI_Init(&argc, &argv);
-    MPI_Comm_rank( MPI_COMM_WORLD, &rank ); //numer procesu
-    MPI_Comm_size( MPI_COMM_WORLD, &size ); //Rozmiar grupy
-    
-    //Losowanie w zaleznosci od czasu i numeru procesu
-    srand(time(NULL) + rank);
+  int n = atoi(getParamValue(argv[1]));
+  int k = atoi(getParamValue(argv[2]));
+  char *mapa = getParamValue(argv[3]);
+  cout<<"n:"<<n<<" , k:"<<k<<" , mapa:"<<mapa<<endl;
 
-    // Liczba poszukiwaczy musi być równa liczbie dostępnych slotów z pliku hosts
-    if(size != n)
-    {
-        cout << "Nieprawidlowa liczba procesow. Docelowa: " << n << " , Aktualna: " << size << endl;
-        MPI_Finalize();
-	return 0;
-    }
+  // Inicjalizacja MPI
+  MPI_Init(&argc, &argv);
+  MPI_Comm_rank( MPI_COMM_WORLD, &rank ); //numer procesu
+  MPI_Comm_size( MPI_COMM_WORLD, &size ); //Rozmiar grupy
 
-    AddMPIPointType();
-    // Tworzenie typu użytkownika używanego do przesyłania w funkcjach Send, Recv, itp. (struktura o dwóch parametrach typu INT)
-       point points[k]; // Tablica struktur, w której zostaną umieszczone lokacje używane przez Poszukiwaczy
-    point allPoints[n*k]; // Tablica struktur, w której zostaną umieszczone wszyskie lokacje z pliku wejściowego 'mapa' - tam gdzie nie ma wraku jest (0,0)
-    vector<point> v;
+  //Losowanie w zaleznosci od czasu i numeru procesu
+  srand(time(NULL) + rank);
 
-    if(rank == 0) // Dowódca
-    {
-        cout << "I am Commander and I'm starting to read the wreck's map." << endl;
-        //v = readTreasureMap(mapa); // Odczytanie mapy i zapisanie lokacji wektora v
-        //copy(v.begin(), v.end(), allPoints); // kopiowanie zawartości wektora v do tablicy wszystkich lokacji
-	readMap(mapa, allPoints);
-    }
-
-    cout << "I'm Finder number " << rank << ". Now I'm waiting for instructions from Commander." << endl;
-    MPI_Scatter(&allPoints, k, mapPoint, &points, k, mapPoint, 0, COMM_WORLD);
-
-    for(i = 0; i < k; i++)
-    {
-        cout << "Finder " << rank << " checks a place " << i << ": " << pointToString(points[i]) << endl;
-        if(found()) // Jeśli wrak jest, zwiększam wartość znalezionych wraków
-        {
-            local_sum++;
-            cout << "Finder " << rank << " reports: wreck at " << pointToString(points[i]) << endl;
-        }
-        else // Jeśli nie ma, ustawiam daną lokację na null - (0,0)
-        {
-            points[i].x = 0;
-            points[i].y = 0;
-        }
-    }
-
-    // Dowódca zbiera (sumuje) od Poszukiwaczy informacje o liczbie znalezionych wraków
-    MPI_Reduce(&local_sum, &global_sum, 1, MPI_INT, MPI_SUM, 0, COMM_WORLD);
-
-    // Dowódca zbiera od każdego Poszukiwacza k lokacji (wysłanych wcześniej), które zawierają informacje o istnieniu wraku
-    MPI_Gather(&points, k, mapPoint, &allPoints, k, mapPoint, 0, COMM_WORLD);
-
-	if(rank == 0) // Dowódca
-    {
-        cout << "Wrecks found: " << global_sum << endl;
-        for(i = 0; i < n*k; i++)
-            if(allPoints[i].x != 0 || allPoints[i].y != 0)
-                cout << "Wreck "<< i << ": " << pointToString(allPoints[i]) <<endl;
-    }
-    FreeMPIPointType();
+  // Liczba poszukiwaczy musi być równa liczbie dostępnych slotów z pliku hosts
+  if(size != n){
+    cout << "Nieprawidlowa liczba procesow. Docelowa: " << n << " , Aktualna: " << size << endl;
     MPI_Finalize();
     return 0;
+  }
+
+  AddMPIPointType();
+  // Tworzenie typu użytkownika używanego do przesyłania w funkcjach Send, Recv, itp. (struktura o dwóch parametrach typu INT)
+  point points[k]; // Tablica struktur, w której zostaną umieszczone lokacje używane przez Poszukiwaczy
+  point allPoints[n*k]; // Tablica struktur, w której zostaną umieszczone wszyskie lokacje z pliku wejściowego 'mapa' - tam gdzie nie ma wraku jest (0,0)
+  vector<point> v;
+
+  if(rank == 0){
+    cout << "I'm the Commander and I'm starting to read the wreck's map." << endl;
+    readMap(mapa, allPoints);
+  }
+
+  cout << "I'm Finder number " << rank << ". Now I'm waiting for instructions from Commander." << endl;
+  MPI_Scatter(&allPoints, k, mapPoint, &points, k, mapPoint, 0, COMM_WORLD);
+
+  for(i = 0; i < k; i++)
+  {
+    cout << "Finder " << rank << " checks a place " << i << ": " << pointToString(points[i]) << endl;
+    if(found()) // Jeśli wrak jest, zwiększam wartość znalezionych wraków
+    {
+      local_sum++;
+      cout << "Finder " << rank << " reports: wreck at " << pointToString(points[i]) << endl;
+    }
+    else // Jeśli nie ma, ustawiam daną lokację na null - (0,0)
+    {
+      points[i].x = 0;
+      points[i].y = 0;
+    }
+  }
+
+  // Dowódca zbiera (sumuje) od Poszukiwaczy informacje o liczbie znalezionych wraków
+  MPI_Reduce(&local_sum, &global_sum, 1, MPI_INT, MPI_SUM, 0, COMM_WORLD);
+
+  // Dowódca zbiera od każdego Poszukiwacza k lokacji (wysłanych wcześniej), które zawierają informacje o istnieniu wraku
+  MPI_Gather(&points, k, mapPoint, &allPoints, k, mapPoint, 0, COMM_WORLD);
+
+  if(rank == 0) // Dowódca
+  {
+    cout << "Wrecks found: " << global_sum << endl;
+    for(i = 0; i < n*k; i++)
+      if(allPoints[i].x != 0 || allPoints[i].y != 0)
+        cout << "Wreck "<< i << ": " << pointToString(allPoints[i]) <<endl;
+  }
+  FreeMPIPointType();
+  MPI_Finalize();
+  return 0;
 }
 
 char* getParamValue(char *s) {
-    vector<char*> v;
-    char* chars_array = strtok(s, "=");
-    while(chars_array)
-    {
-        v.push_back(chars_array);
-        chars_array = strtok(NULL, "=");
-    }
-    return v[1];
+  vector<char*> v;
+  char* chars_array = strtok(s, "=");
+  while(chars_array){
+    v.push_back(chars_array);
+    chars_array = strtok(NULL, "=");
+  }
+  return v[1];
 }
 
 string pointToString(point loc){
@@ -129,16 +125,16 @@ string pointToString(point loc){
 
 void AddMPIPointType()
 {
-    MPI_Datatype type[2] = { MPI_INT, MPI_INT }; // Typy w strukturze
-    int blocklen[2] = { 1, 1 }; // Ilość każdego ww typu w strukturze
+  MPI_Datatype type[2] = { MPI_INT, MPI_INT }; // Typy w strukturze
+  int blocklen[2] = { 1, 1 }; // Ilość każdego ww typu w strukturze
 
-    Aint disp[2] = { // Przesunięcie w pamięci dla struktury
-       offsetof(point, x),
-       offsetof(point, y)
-    };
+  Aint disp[2] = { // Przesunięcie w pamięci dla struktury
+    offsetof(point, x),
+    offsetof(point, y)
+  };
 
-    MPI_Type_struct(2, blocklen, disp, type, &mapPoint);
-    MPI_Type_commit(&mapPoint); // Od tej pory w programie dostępny jest typ 'mapPoint'
+  MPI_Type_struct(2, blocklen, disp, type, &mapPoint);
+  MPI_Type_commit(&mapPoint); // Od tej pory w programie dostępny jest typ 'mapPoint'
 }
 
 void FreeMPIPointType()
@@ -149,8 +145,8 @@ void FreeMPIPointType()
 // 20% szansy
 bool found()
 {
-    usleep(rand()%400000+100000);
-    return (rand() % 5 == 0);
+  usleep(rand()%400000+100000);
+  return (rand() % 5 == 0);
 }
 
 // parsowanie
