@@ -41,17 +41,22 @@ int main (int argc, char **argv)
   int n = atoi(getParamValue(argv[1]));
   int k = atoi(getParamValue(argv[2]));
   char *mapa = getParamValue(argv[3]);
-  cout<<"n:"<<n<<" , k:"<<k<<" , mapa:"<<mapa<<endl;
+  point currentPoints[k]; // Tablica struktur, w której zostaną umieszczone lokacje używane przez Poszukiwaczy
+  point allPoints[n*k]; // Tablica struktur, w której zostaną umieszczone wszyskie lokacje z pliku wejściowego 'mapa' - tam gdzie nie ma wraku jest (0,0)
+  vector<point> v;
 
-  // Inicjalizacja MPI
+
+   // Inicjalizacja MPI
   MPI_Init(&argc, &argv);
   MPI_Comm_rank( MPI_COMM_WORLD, &rank ); //numer procesu
   MPI_Comm_size( MPI_COMM_WORLD, &size ); //Rozmiar grupy
 
+ if (rank==0) cout<<"n:"<<n<<" , k:"<<k<<" , mapa:"<<mapa<<endl;
+
   //Losowanie w zaleznosci od czasu i numeru procesu
   srand(time(NULL) + rank);
 
-  // Liczba poszukiwaczy musi być równa liczbie dostępnych slotów z pliku hosts
+  // Czy n zgadza sie z liczba wymaganych procesow?
   if(size != n){
     cout << "Nieprawidlowa liczba procesow. Docelowa: " << n << " , Aktualna: " << size << endl;
     MPI_Finalize();
@@ -60,30 +65,26 @@ int main (int argc, char **argv)
 
   AddMPIPointType();
   // Tworzenie typu użytkownika używanego do przesyłania w funkcjach Send, Recv, itp. (struktura o dwóch parametrach typu INT)
-  point points[k]; // Tablica struktur, w której zostaną umieszczone lokacje używane przez Poszukiwaczy
-  point allPoints[n*k]; // Tablica struktur, w której zostaną umieszczone wszyskie lokacje z pliku wejściowego 'mapa' - tam gdzie nie ma wraku jest (0,0)
-  vector<point> v;
-
-  if(rank == 0){
+   if(rank == 0){
     cout << "Dowodca czyta mape..." << endl;
     readMap(mapa, allPoints);
   }
 
   //Rozeslij po k lokalizacji do kazdego z poszukiwaczy
-  MPI_Scatter(&allPoints, k, mapPoint, &points, k, mapPoint, 0, COMM_WORLD);
+  MPI_Scatter(&allPoints, k, mapPoint, &currentPoints, k, mapPoint, 0, COMM_WORLD);
 
   for(i = 0; i < k; i++)
   {
-    cout << "Poszukiwacz " << rank << " sprawdza miejsce " << pointToString(points[i]) << endl;
+    cout << "Poszukiwacz " << rank << " sprawdza miejsce " << pointToString(currentPoints[i]) << endl;
     if(searchForWreckage()) // Jeśli wrak jest, zwiększam wartość znalezionych wraków
     {
       currentWreckagesCount++;
-      cout << "Poszukiwacz " << rank << " znalazl wrak w " << pointToString(points[i]) << endl;
+      cout << "Poszukiwacz " << rank << " znalazl wrak w " << pointToString(currentPoints[i]) << endl;
     }
     else // Jeśli nie ma, ustawiam daną lokację na null - (0,0)
     {
-      points[i].x = 0;
-      points[i].y = 0;
+      currentPoints[i].x = 0;
+      currentPoints[i].y = 0;
     }
   }
 
@@ -93,11 +94,11 @@ int main (int argc, char **argv)
     cout<<"Wszyscy poszukiwacze wrocili. Podsumowuje poszukiwania:"<<endl;
   }
 
-// Dowódca zbiera (sumuje) od Poszukiwaczy informacje o liczbie znalezionych wraków
+ // Dowódca zbiera (sumuje) od Poszukiwaczy informacje o liczbie znalezionych wraków
   MPI_Reduce(&currentWreckagesCount, &allWreckagesCount, 1, MPI_INT, MPI_SUM, 0, COMM_WORLD);
 
   // Dowódca zbiera od każdego Poszukiwacza k lokacji (wysłanych wcześniej), które zawierają informacje o istnieniu wraku
-  MPI_Gather(&points, k, mapPoint, &allPoints, k, mapPoint, 0, COMM_WORLD);
+  MPI_Gather(&currentPoints, k, mapPoint, &allPoints, k, mapPoint, 0, COMM_WORLD);
 
   if(rank == 0) // Dowódca
   {
