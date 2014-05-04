@@ -1,19 +1,17 @@
+#include <unistd.h>
+#include <mpi.h>
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
 #include <iostream>
-#include <mpi.h>
 #include <sstream>
 #include <string>
 #include <time.h>
-#include <unistd.h>
 #include <vector>
 
-using namespace MPI;
+//using namespace MPI;
 using namespace std;
-
-MPI_Datatype mapPoint;
 
 struct location {
     int x;
@@ -21,10 +19,20 @@ struct location {
 };
 
 bool found();
-void readMap(char * input, coords* tab);
+location* parseMap(char * input, int n, int k);
 
 int main (int argc, char **argv)
 {
+  char* mapa_file = "./mapa";
+  int n = 4;
+  int k = 3;
+  if (argc==4){
+    n = atoi(argv[1]);
+    k = atoi(argv[2]);
+    mapa_file = argv[3];
+  }
+  location* points;
+  points = parseMap(mapa_file,n,k);
 
   return 0;
 }
@@ -32,24 +40,25 @@ int main (int argc, char **argv)
 // 20% szansy
 bool found()
 {
-  usleep(waiting_time * 1000);
+  usleep(1* 1000);
   return rand() % 5 == 0;
 }
 
 // parsowanie
-void readMap(char * input, coords* tab)
+location* parseMap(char * input, int n, int k)
 {
   FILE* f = fopen(input, "rt");
-  //char* line;
+  location points[n*k];
   int i = 0;
   int a,b;
 
   while(!feof(f)) {
     fscanf(f, "%d, %d\n", &a, &b);
-    tab[i].X = a;
-    tab[i].Y = b;
+    points[i].x = a;
+    points[i].y = b;
+    cout << a << " " << b << endl;
     i++;
   }
-
   fclose(f);
+  return points;
 }
