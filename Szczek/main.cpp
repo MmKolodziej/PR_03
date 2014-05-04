@@ -108,7 +108,7 @@ int main (int argc, char **argv)
     {
       //Jezeli dany punkt nie jest = NULL
       if(!(allPoints[i].x == 0 && allPoints[i].y == 0))
-        cout << "\033[1;33Wrak "<< wreckageNumber++ << ": " << pointToString(allPoints[i]) << "\033[0m\n";
+        cout << "\033[1;33mWrak "<< wreckageNumber++ << ": " << pointToString(allPoints[i]) << "\033[0m\n";
     }
   }
   FreeMPIPointType();
