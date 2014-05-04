@@ -32,12 +32,11 @@ int main (int argc, char **argv)
     mapa_file = argv[3];
   }
   int size, rank;
-  location* points = malloc (sizeof(location)*n*k);
   MPI_Init(&argc, &argv);
   size = COMM_WORLD.Get_size();
   rank = COMM_WORLD.Get_rank();
   if (rank==0){
-    points = parseMap(mapa_file,n,k);
+    location* points = parseMap(mapa_file,n,k);
     int i = 0;
     for (i=0; i<n*k; i++)
       cout << points[i].x << " " << points[i].y << endl;
@@ -57,7 +56,7 @@ bool found()
 location* parseMap(char * input, int n, int k)
 {
   FILE* f = fopen(input, "rt");
-  location points[n*k];
+  location *points;
   int i = 0;
   int a,b;
 
