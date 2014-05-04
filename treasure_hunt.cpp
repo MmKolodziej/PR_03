@@ -10,7 +10,7 @@
 #include <time.h>
 #include <vector>
 
-//using namespace MPI;
+using namespace MPI;
 using namespace std;
 
 struct location {
@@ -40,8 +40,9 @@ int main (int argc, char **argv)
     points = parseMap(mapa_file,n,k);
     int i = 0;
     for (i=0; i<n*k; i++)
-      cout points[i].x << " " << points[i].y << endl;
+      cout << points[i].x << " " << points[i].y << endl;
   }
+  Finalize();
   return 0;
 }
 
