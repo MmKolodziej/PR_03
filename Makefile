@@ -2,10 +2,10 @@ CC=mpicc
 C_FLAGS=-Wall  -g
 L_FLAGS=-lm -lrt
 HOSTFILE=hosts
-PROGRAM=soldiers
+PROGRAM=zad3
 
 ifeq ($(strip $(plik)),)
-  plik := ./siatka
+  plik := ./mapa
 endif
 
 SOURCES=$(wildcard *.c)
