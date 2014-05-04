@@ -23,26 +23,28 @@ struct coords {
     int Y;
 };
 
+
+char* getParamValue(char *s);
 bool found();
 vector<coords> readTreasureMap(char *);
 void readMap(char * input, coords* tab);
+void AddMPIPointType();
+void FreeMPIPointType();
 
 int main (int argc, char **argv)
 {
     int rank, size;
     int n, k, i, local_sum = 0, global_sum = -1;
-    char mapa_def[] = "./mapa.txt";
-    char* mapa = mapa_def;
+    char* mapa;
 
     n = 4;
     k = 3;
 
-    if(argc >= 4)
-        mapa = (char *)argv[3];
-    if (argc >= 3)
-        k = atoi(argv[2]);
-    if (argc >= 2)
-        n = atoi(argv[1]);
+    mapa = getParamValue(argv[3]);
+    k = atoi(getParamValue(argv[2]));
+    n = atoi(getParamValue(argv[1]));
+
+    cout<<"n:"<<n<<" , k:"<<k<<" , mapa:"<<mapa<<endl;
 
     // Inicjalizacja środowiska
     MPI_Init(&argc, &argv);
@@ -59,19 +61,9 @@ int main (int argc, char **argv)
         return 0;
     }
 
+    AddMPIPointType();
     // Tworzenie typu użytkownika używanego do przesyłania w funkcjach Send, Recv, itp. (struktura o dwóch parametrach typu INT)
-    MPI_Datatype type[2] = { MPI_INT, MPI_INT }; // Typy w strukturze
-    int blocklen[2] = { 1, 1 }; // Ilość każdego ww typu w strukturze
-
-    Aint disp[2] = { // Przesunięcie w pamięci dla struktury
-       offsetof(coords, X),
-       offsetof(coords, Y)
-    };
-
-    MPI_Type_struct(2, blocklen, disp, type, &mapPoint);
-    MPI_Type_commit(&mapPoint); // Od tej pory w programie dostępny jest typ 'mapPoint'
-
-    coords points[k]; // Tablica struktur, w której zostaną umieszczone lokacje używane przez Poszukiwaczy
+       coords points[k]; // Tablica struktur, w której zostaną umieszczone lokacje używane przez Poszukiwaczy
     coords allPoints[n*k]; // Tablica struktur, w której zostaną umieszczone wszyskie lokacje z pliku wejściowego 'mapa' - tam gdzie nie ma wraku jest (0,0)
     vector<coords> v;
 
@@ -114,10 +106,39 @@ int main (int argc, char **argv)
             if(allPoints[i].X != 0 || allPoints[i].Y != 0)
                 cout << "Wreck "<< i << ": (" << allPoints[i].X << "," << allPoints[i].Y << ")" <<endl;
     }
-
-    MPI_Type_free(&mapPoint);
+    FreeMPIPointType();
     Finalize();
     return 0;
+}
+
+char* getParamValue(char *s) {
+    vector<char*> v;
+    char* chars_array = strtok(s, "=");
+    while(chars_array)
+    {
+        v.push_back(chars_array);
+        chars_array = strtok(NULL, "=");
+    }
+    return v[1];
+}
+
+void AddMPIPointType()
+{
+    MPI_Datatype type[2] = { MPI_INT, MPI_INT }; // Typy w strukturze
+    int blocklen[2] = { 1, 1 }; // Ilość każdego ww typu w strukturze
+
+    Aint disp[2] = { // Przesunięcie w pamięci dla struktury
+       offsetof(coords, X),
+       offsetof(coords, Y)
+    };
+
+    MPI_Type_struct(2, blocklen, disp, type, &mapPoint);
+    MPI_Type_commit(&mapPoint); // Od tej pory w programie dostępny jest typ 'mapPoint'
+}
+
+void FreeMPIPointType()
+{
+	MPI_Type_free(&mapPoint);
 }
 
 // 20% szansy
