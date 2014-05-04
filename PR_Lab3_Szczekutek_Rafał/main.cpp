@@ -15,12 +15,11 @@
 using namespace MPI;
 using namespace std;
 
-const int waiting_time = 250; //msec
 MPI_Datatype mapPoint;
 
 struct coords {
-    int X;
-    int Y;
+    int x;
+    int y;
 };
 
 
@@ -80,16 +79,16 @@ int main (int argc, char **argv)
 
     for(i = 0; i < k; i++)
     {
-        cout << "Finder " << rank << " checks a place " << i << ": (" << points[i].X << "," << points[i].Y << ")" << endl;
+        cout << "Finder " << rank << " checks a place " << i << ": (" << points[i].x << "," << points[i].y << ")" << endl;
         if(found()) // Jeśli wrak jest, zwiększam wartość znalezionych wraków
         {
             local_sum++;
-            cout << "Finder " << rank << " reports: wreck at (" << points[i].X << "," << points[i].Y << ")" << endl;
+            cout << "Finder " << rank << " reports: wreck at (" << points[i].x << "," << points[i].y << ")" << endl;
         }
         else // Jeśli nie ma, ustawiam daną lokację na null - (0,0)
         {
-            points[i].X = 0;
-            points[i].Y = 0;
+            points[i].x = 0;
+            points[i].y = 0;
         }
     }
 
@@ -103,8 +102,8 @@ int main (int argc, char **argv)
     {
         cout << "Wrecks found: " << global_sum << endl;
         for(i = 0; i < n*k; i++)
-            if(allPoints[i].X != 0 || allPoints[i].Y != 0)
-                cout << "Wreck "<< i << ": (" << allPoints[i].X << "," << allPoints[i].Y << ")" <<endl;
+            if(allPoints[i].x != 0 || allPoints[i].y != 0)
+                cout << "Wreck "<< i << ": (" << allPoints[i].x << "," << allPoints[i].y << ")" <<endl;
     }
     FreeMPIPointType();
     Finalize();
@@ -128,8 +127,8 @@ void AddMPIPointType()
     int blocklen[2] = { 1, 1 }; // Ilość każdego ww typu w strukturze
 
     Aint disp[2] = { // Przesunięcie w pamięci dla struktury
-       offsetof(coords, X),
-       offsetof(coords, Y)
+       offsetof(coords, x),
+       offsetof(coords, y)
     };
 
     MPI_Type_struct(2, blocklen, disp, type, &mapPoint);
@@ -144,22 +143,21 @@ void FreeMPIPointType()
 // 20% szansy
 bool found()
 {
-    usleep(waiting_time * 1000);
-    return rand() % 5 == 0 ? true : false;
+    usleep(rand() 400000+100000);
+    return rand() % 5 == 0;
 }
 
 // parsowanie
 void readMap(char * input, coords* tab)
 {
 	FILE* f = fopen(input, "rt");
-	//char* line;
 	int i = 0;
 	int a,b;
 
 	while(!feof(f)) {
 		fscanf(f, "%d, %d\n", &a, &b);
-		tab[i].X = a;
-		tab[i].Y = b;
+		tab[i].x = a;
+		tab[i].y = b;
 		i++;
 	}
 
