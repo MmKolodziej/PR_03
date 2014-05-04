@@ -42,9 +42,8 @@ int main (int argc, char **argv)
   char *mapa = getParamValue(argv[3]);
   point currentPoints[k]; // Tablica struktur, w której zostaną umieszczone lokacje używane przez Poszukiwaczy
   point allPoints[n*k]; // Tablica struktur, w której zostaną umieszczone wszyskie lokacje z pliku wejściowego 'mapa' - tam gdzie nie ma wraku jest (0,0)
-  vector<point> v;
-
-   // Inicjalizacja MPI
+  
+  // Inicjalizacja MPI
   MPI_Init(&argc, &argv);
   MPI_Comm_rank( MPI_COMM_WORLD, &rank ); //numer procesu
   MPI_Comm_size( MPI_COMM_WORLD, &size ); //Rozmiar grupy
@@ -61,9 +60,10 @@ int main (int argc, char **argv)
     return 0;
   }
 
+  //Deklaruje specjalny typ potrzebny do wymiany informacji pomiedzy procesami
   AddMPIPointType();
-  // Tworzenie typu użytkownika używanego do przesyłania w funkcjach Send, Recv, itp. (struktura o dwóch parametrach typu INT)
-   if(rank == 0){
+  
+  if(rank == 0){
     cout << "Dowodca czyta mape..." << endl;
     readMap(mapa, allPoints);
   }
@@ -74,31 +74,31 @@ int main (int argc, char **argv)
   for(i = 0; i < k; i++)
   {
     cout << "Poszukiwacz " << rank << " sprawdza miejsce " << pointToString(currentPoints[i]) << endl;
-    if(searchForWreckage()) // Jeśli wrak jest, zwiększam wartość znalezionych wraków
+    if(searchForWreckage()) // Zwraca true, jezeli znaleziono wrak
     {
       currentWreckagesCount++;
       cout << "\033[1;32mPoszukiwacz " << rank << " znalazl wrak w " << pointToString(currentPoints[i]) << "\033[0m\n";
     }
-    else // Jeśli nie ma, ustawiam daną lokację na null - (0,0)
+    else 
     {
+     //jesl9i nie ma wraku, ustaw NULL
       currentPoints[i].x = 0;
       currentPoints[i].y = 0;
     }
   }
 
-
+  //Poczekaj na wszystkich poszukiwaczy
   MPI_Barrier(MPI_COMM_WORLD);
-  if (rank==0) {
+  if (rank==0)
     cout<<"\033[1;34mWszyscy poszukiwacze wrocili. Podsumowuje poszukiwania:\033[0m\n";
-  }
-
- // Dowódca zbiera (sumuje) od Poszukiwaczy informacje o liczbie znalezionych wraków
+  
+ // Proces 0 (dowodca) sumuje zlicza liczbe wszystkich znalezionych wrakow
   MPI_Reduce(&currentWreckagesCount, &allWreckagesCount, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 
-  // Dowódca zbiera od każdego Poszukiwacza k lokacji (wysłanych wcześniej), które zawierają informacje o istnieniu wraku
+  // Proces 0 (dowodca) gromadzi informacje o odwiedzonych miejscach od poszczegolnych poszukiwaczy i zapisuje je w allPoints
   MPI_Gather(&currentPoints, k, MPIPoint, &allPoints, k, MPIPoint, 0, MPI_COMM_WORLD);
 
-  if(rank == 0) // Dowódca
+  if(rank == 0)
   {
     int wreckageNumber = 1;
     cout << "Znaleziono wrakow: " << allWreckagesCount << endl;
@@ -148,24 +148,22 @@ void FreeMPIPointType()
   MPI_Type_free(&MPIPoint);
 }
 
-// znajdujemy z prawdopodobieństwem 20% wraku w losowym czasie
 bool searchForWreckage()
 {
   usleep(rand()%400000+100000);
   return (rand() % 5 == 0);
 }
 
-// parsowanie
-void readMap(char * input, point* tab)
+void readMap(char * mapFile, point* points)
 {
-  FILE* f = fopen(input, "rt");
+  FILE* f = fopen(mapFile, "rt");
   int i = 0;
-  int a,b;
+  int x,y;
 
   while(!feof(f)) {
-    fscanf(f, "%d, %d\n", &a, &b);
-    tab[i].x = a;
-    tab[i].y = b;
+    fscanf(f, "%d, %d\n", &x, &y);
+    points[i].x = x;
+    points[i].y = y;
     i++;
   }
 
