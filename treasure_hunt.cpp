@@ -32,7 +32,7 @@ int main (int argc, char **argv)
     mapa_file = argv[3];
   }
   int size, rank;
-  location* points;
+  location* points = malloc (sizeof(location)*n*k);
   MPI_Init(&argc, &argv);
   size = COMM_WORLD.Get_size();
   rank = COMM_WORLD.Get_rank();
