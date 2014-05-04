@@ -132,16 +132,15 @@ string pointToString(point loc){
 
 void AddMPIPointType()
 {
-  MPI_Datatype type[2] = { MPI_INT, MPI_INT }; // Typy w strukturze
-  int blocklen[2] = { 1, 1 }; // Ilość każdego ww typu w strukturze
+  const int nitems=2;
+  int          blocklengths[2] = { 1,1 };
+  MPI_Datatype types[2] = { MPI_INT, MPI_INT };
+  MPI_Aint     offsets[2];
 
-  MPI_Aint disp[2] = { // Przesunięcie w pamięci dla struktury
-    offsetof(point, x),
-    offsetof(point, y)
-  };
+  offsets[0] = offsetof(point, x);
+  offsets[1] = offsetof(point, y);
 
-  MPI_Type_struct(2, blocklen, disp, type, &MPIPoint);
-  MPI_Type_commit(&MPIPoint); // Od tej pory w programie dostępny jest typ 'MPIPoint'
+  MPI_Type_create_struct(nitems, blocklengths, offsets, types, &MPIPoint);
 }
 
 void FreeMPIPointType()
