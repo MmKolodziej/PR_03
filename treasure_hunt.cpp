@@ -19,7 +19,7 @@ struct location {
 };
 
 bool found();
-location* parseMap(char * input, int n, int k);
+void readMap(char * input, location* ad);
 
 int main (int argc, char **argv)
 {
@@ -35,8 +35,9 @@ int main (int argc, char **argv)
   MPI_Init(&argc, &argv);
   size = COMM_WORLD.Get_size();
   rank = COMM_WORLD.Get_rank();
+  location points[n*k];
   if (rank==0){
-    location* points = parseMap(mapa_file,n,k);
+    arseMap(mapa_file,points);
     int i = 0;
     for (i=0; i<n*k; i++)
       cout << points[i].x << " " << points[i].y << endl;
@@ -53,21 +54,19 @@ bool found()
 }
 
 // parsowanie
-location* parseMap(char * input, int n, int k)
+void readMap(char * input, location* tab)
 {
   FILE* f = fopen(input, "rt");
-  location *points;
+  //char* line;
   int i = 0;
   int a,b;
 
   while(!feof(f)) {
     fscanf(f, "%d, %d\n", &a, &b);
-    points[i].x = a;
-    points[i].y = b;
-    cout << "a: " << a << ", b: " << b << endl;
-    cout << "points[a]: " << points[i].x << ", points[b]: " << points[i].y << endl;
+    tab[i].X = a;
+    tab[i].Y = b;
     i++;
   }
+
   fclose(f);
-  return points;
 }
