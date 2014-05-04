@@ -29,7 +29,7 @@ vector<point> readTreasureMap(char *);
 void readMap(char * input, point* tab);
 void AddMPIPointType();
 void FreeMPIPointType();
-char* pointToString(point);
+string pointToString(point);
 
 int main (int argc, char **argv)
 {
@@ -122,7 +122,7 @@ char* getParamValue(char *s) {
     return v[1];
 }
 
-char* pointToString(point loc){
+string pointToString(point loc){
   stringstream ss;
   ss << "(" << loc.x << "," << loc.y << ")";
   return ss.str();
