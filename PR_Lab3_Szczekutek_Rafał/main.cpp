@@ -18,10 +18,8 @@ using namespace std;
 MPI_Datatype mapPoint;
 
 struct point{
-    int x;
-    int y;
+    int x,y;
 };
-
 
 char* getParamValue(char *s);
 bool found();
@@ -33,31 +31,32 @@ void FreeMPIPointType();
 int main (int argc, char **argv)
 {
     int rank, size;
-    int n, k, i, local_sum = 0, global_sum = -1;
-    char* mapa;
+    int i, local_sum = 0, global_sum = -1;
+ 
+    if (argc!=4){
+	cout<<"Nieprawidlowa liczba parametrow. Poprawne uzycie ./main n=[n] k=[k] mapa=[mapa]"<<endl;
+	return 0;
+    }
 
-    n = 4;
-    k = 3;
-
-    mapa = getParamValue(argv[3]);
-    k = atoi(getParamValue(argv[2]));
-    n = atoi(getParamValue(argv[1]));
-
+    int n = atoi(getParamValue(argv[1]));
+    int k = atoi(getParamValue(argv[2]));
+    char *mapa = getParamValue(argv[3]);
     cout<<"n:"<<n<<" , k:"<<k<<" , mapa:"<<mapa<<endl;
 
-    // Inicjalizacja środowiska
+    // Inicjalizacja MPI
     MPI_Init(&argc, &argv);
-    size = COMM_WORLD.Get_size();
-    rank = COMM_WORLD.Get_rank();
-
-    srand(time(NULL) * rank); // Generator liczb pseudolosowych inicjalizowany w zależności od czasu i numeru węzła
+    MPI_Comm_rank( MPI_COMM_WORLD, &rank ); //numer procesu
+    MPI_Comm_size( MPI_COMM_WORLD, &size ); //Rozmiar grupy
+    
+    //Losowanie w zaleznosci od czasu i numeru procesu
+    srand(time(NULL) + rank);
 
     // Liczba poszukiwaczy musi być równa liczbie dostępnych slotów z pliku hosts
     if(size != n)
     {
-        cout << "Wrong number of processes, should be: " << n << " and actually is: " << size << endl;
-        Finalize();
-        return 0;
+        cout << "Nieprawidlowa liczba procesow. Docelowa: " << n << " , Aktualna: " << size << endl;
+        MPI_Finalize();
+	return 0;
     }
 
     AddMPIPointType();
@@ -71,11 +70,11 @@ int main (int argc, char **argv)
         cout << "I am Commander and I'm starting to read the wreck's map." << endl;
         //v = readTreasureMap(mapa); // Odczytanie mapy i zapisanie lokacji wektora v
         //copy(v.begin(), v.end(), allPoints); // kopiowanie zawartości wektora v do tablicy wszystkich lokacji
-		readMap(mapa, allPoints);
+	readMap(mapa, allPoints);
     }
 
     cout << "I'm Finder number " << rank << ". Now I'm waiting for instructions from Commander." << endl;
-    COMM_WORLD.Scatter(&allPoints, k, mapPoint, &points, k, mapPoint, 0);
+    MPI_Scatter(&allPoints, k, mapPoint, &points, k, mapPoint, 0, COMM_WORLD);
 
     for(i = 0; i < k; i++)
     {
@@ -93,10 +92,10 @@ int main (int argc, char **argv)
     }
 
     // Dowódca zbiera (sumuje) od Poszukiwaczy informacje o liczbie znalezionych wraków
-    COMM_WORLD.Reduce(&local_sum, &global_sum, 1, MPI_INT, MPI_SUM, 0);
+    MPI_Reduce(&local_sum, &global_sum, 1, MPI_INT, MPI_SUM, 0, COMM_WORLD);
 
     // Dowódca zbiera od każdego Poszukiwacza k lokacji (wysłanych wcześniej), które zawierają informacje o istnieniu wraku
-    COMM_WORLD.Gather(&points, k, mapPoint, &allPoints, k, mapPoint, 0);
+    MPI_Gather(&points, k, mapPoint, &allPoints, k, mapPoint, 0, COMM_WORLD);
 
 	if(rank == 0) // Dowódca
     {
@@ -106,7 +105,7 @@ int main (int argc, char **argv)
                 cout << "Wreck "<< i << ": (" << allPoints[i].x << "," << allPoints[i].y << ")" <<endl;
     }
     FreeMPIPointType();
-    Finalize();
+    MPI_Finalize();
     return 0;
 }
 
