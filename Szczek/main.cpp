@@ -22,8 +22,7 @@ struct point{
 };
 
 char* getParamValue(char *s);
-bool found();
-vector<point> readTreasureMap(char *);
+bool searchForWreckage();
 void readMap(char * input, point* tab);
 void AddMPIPointType();
 void FreeMPIPointType();
@@ -74,10 +73,9 @@ int main (int argc, char **argv)
   //Rozeslij po k lokalizacji do kazdego z poszukiwaczy
   MPI_Scatter(&allPoints, k, mapPoint, &points, k, mapPoint, 0, COMM_WORLD);
 
-  cout << "I'm Finder number " << rank << ". Now I'm waiting for instructions from Commander." << endl;
-   for(i = 0; i < k; i++)
+  for(i = 0; i < k; i++)
   {
-    cout << "Finder " << rank << " checks a place " << i << ": " << pointToString(points[i]) << endl;
+    cout << "Poszukiwacz " << rank << "sprawdza miejsce " << pointToString(points[i]) << endl;
     if(searchForWreckage()) // Jeśli wrak jest, zwiększam wartość znalezionych wraków
     {
       local_sum++;
