@@ -17,7 +17,7 @@ using namespace std;
 
 MPI_Datatype mapPoint;
 
-struct coords {
+struct point{
     int x;
     int y;
 };
@@ -25,8 +25,8 @@ struct coords {
 
 char* getParamValue(char *s);
 bool found();
-vector<coords> readTreasureMap(char *);
-void readMap(char * input, coords* tab);
+vector<point> readTreasureMap(char *);
+void readMap(char * input, point* tab);
 void AddMPIPointType();
 void FreeMPIPointType();
 
@@ -62,9 +62,9 @@ int main (int argc, char **argv)
 
     AddMPIPointType();
     // Tworzenie typu użytkownika używanego do przesyłania w funkcjach Send, Recv, itp. (struktura o dwóch parametrach typu INT)
-       coords points[k]; // Tablica struktur, w której zostaną umieszczone lokacje używane przez Poszukiwaczy
-    coords allPoints[n*k]; // Tablica struktur, w której zostaną umieszczone wszyskie lokacje z pliku wejściowego 'mapa' - tam gdzie nie ma wraku jest (0,0)
-    vector<coords> v;
+       point points[k]; // Tablica struktur, w której zostaną umieszczone lokacje używane przez Poszukiwaczy
+    point allPoints[n*k]; // Tablica struktur, w której zostaną umieszczone wszyskie lokacje z pliku wejściowego 'mapa' - tam gdzie nie ma wraku jest (0,0)
+    vector<point> v;
 
     if(rank == 0) // Dowódca
     {
@@ -127,8 +127,8 @@ void AddMPIPointType()
     int blocklen[2] = { 1, 1 }; // Ilość każdego ww typu w strukturze
 
     Aint disp[2] = { // Przesunięcie w pamięci dla struktury
-       offsetof(coords, x),
-       offsetof(coords, y)
+       offsetof(point, x),
+       offsetof(point, y)
     };
 
     MPI_Type_struct(2, blocklen, disp, type, &mapPoint);
@@ -143,12 +143,12 @@ void FreeMPIPointType()
 // 20% szansy
 bool found()
 {
-    usleep(rand() 400000+100000);
-    return rand() % 5 == 0;
+    usleep(rand()%400000+100000);
+    return (rand() % 5 == 0);
 }
 
 // parsowanie
-void readMap(char * input, coords* tab)
+void readMap(char * input, point* tab)
 {
 	FILE* f = fopen(input, "rt");
 	int i = 0;
