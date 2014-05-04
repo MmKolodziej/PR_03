@@ -25,7 +25,6 @@ void readMap(char * input, coords* tab);
 
 int main (int argc, char **argv)
 {
-
   return 0;
 }
 
