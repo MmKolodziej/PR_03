@@ -1,5 +1,3 @@
-// authors: Ernest Przestrzelski, Kamil Starczak, Piotr Szyperski, Rafał Szczekutek
-
 #include <mpi.h>
 #include <iostream>
 #include <fstream>
@@ -31,7 +29,8 @@ string pointToString(point);
 int main (int argc, char **argv)
 {
   int rank, size;
-  int i, local_sum = 0, global_sum = -1;
+  int i;
+  int currentWreckageCount, allWreckageCount;
 
   if (argc!=4){
   	cout<<"Nieprawidlowa liczba parametrow. Poprawne uzycie ./main n=[n] k=[k] mapa=[mapa]"<<endl;
@@ -66,7 +65,7 @@ int main (int argc, char **argv)
   vector<point> v;
 
   if(rank == 0){
-    cout << "I'm the Commander and I'm starting to read the wreck's map." << endl;
+    cout << "Dowodca czyta mape..." << endl;
     readMap(mapa, allPoints);
   }
 
@@ -75,11 +74,11 @@ int main (int argc, char **argv)
 
   for(i = 0; i < k; i++)
   {
-    cout << "Poszukiwacz " << rank << "sprawdza miejsce " << pointToString(points[i]) << endl;
+    cout << "Poszukiwacz " << rank << " sprawdza miejsce " << pointToString(points[i]) << endl;
     if(searchForWreckage()) // Jeśli wrak jest, zwiększam wartość znalezionych wraków
     {
-      local_sum++;
-      cout << "Finder " << rank << " reports: wreck at " << pointToString(points[i]) << endl;
+      currentWreckageCount++;
+      cout << "Poszukiwacz " << rank << " znalazl wrak w " << pointToString(points[i]) << endl;
     }
     else // Jeśli nie ma, ustawiam daną lokację na null - (0,0)
     {
@@ -91,21 +90,25 @@ int main (int argc, char **argv)
 
   MPI_Barrier(COMM_WORLD);
   if (rank==0) {
-    cout<<"Wszyscy poszukiwacze wrocili. Podsumowuje poszukiwania..."<<endl;
+    cout<<"Wszyscy poszukiwacze wrocili. Podsumowuje poszukiwania:"<<endl;
   }
 
 // Dowódca zbiera (sumuje) od Poszukiwaczy informacje o liczbie znalezionych wraków
-  MPI_Reduce(&local_sum, &global_sum, 1, MPI_INT, MPI_SUM, 0, COMM_WORLD);
+  MPI_Reduce(&local_sum, &allWreckageCount, 1, MPI_INT, MPI_SUM, 0, COMM_WORLD);
 
   // Dowódca zbiera od każdego Poszukiwacza k lokacji (wysłanych wcześniej), które zawierają informacje o istnieniu wraku
   MPI_Gather(&points, k, mapPoint, &allPoints, k, mapPoint, 0, COMM_WORLD);
 
   if(rank == 0) // Dowódca
   {
-    cout << "Wrecks found: " << global_sum << endl;
+    int wreckageNumber = 1;
+    cout << "Znaleziono wrakow: " << allWreckagesCount << endl;
     for(i = 0; i < n*k; i++)
-      if(allPoints[i].x != 0 || allPoints[i].y != 0)
-        cout << "Wreck "<< i << ": " << pointToString(allPoints[i]) <<endl;
+    {
+      //Jezeli dany punkt nie jest = NULL
+      if(!(allPoints[i].x == 0 && allPoints[i].y == 0))
+        cout << "Wrak "<< wreckageNumber++ << ": " << pointToString(allPoints[i]) <<endl;
+    }
   }
   FreeMPIPointType();
   MPI_Finalize();
