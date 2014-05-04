@@ -78,7 +78,7 @@ int main (int argc, char **argv)
    for(i = 0; i < k; i++)
   {
     cout << "Finder " << rank << " checks a place " << i << ": " << pointToString(points[i]) << endl;
-    if(found()) // Jeśli wrak jest, zwiększam wartość znalezionych wraków
+    if(searchForWreckage()) // Jeśli wrak jest, zwiększam wartość znalezionych wraków
     {
       local_sum++;
       cout << "Finder " << rank << " reports: wreck at " << pointToString(points[i]) << endl;
@@ -89,12 +89,12 @@ int main (int argc, char **argv)
       points[i].y = 0;
     }
   }
-  
-  
+
+
   MPI_Barrier(COMM_WORLD);
   if (rank==0) {
     cout<<"Wszyscy poszukiwacze wrocili. Podsumowuje poszukiwania..."<<endl;
-  }  
+  }
 
 // Dowódca zbiera (sumuje) od Poszukiwaczy informacje o liczbie znalezionych wraków
   MPI_Reduce(&local_sum, &global_sum, 1, MPI_INT, MPI_SUM, 0, COMM_WORLD);
@@ -146,11 +146,11 @@ void AddMPIPointType()
 
 void FreeMPIPointType()
 {
-	MPI_Type_free(&mapPoint);
+  MPI_Type_free(&mapPoint);
 }
 
-// 20% szansy
-bool found()
+// znajdujemy z prawdopodobieństwem 20% wraku w losowym czasie
+bool searchForWreckage()
 {
   usleep(rand()%400000+100000);
   return (rand() % 5 == 0);
@@ -159,16 +159,16 @@ bool found()
 // parsowanie
 void readMap(char * input, point* tab)
 {
-	FILE* f = fopen(input, "rt");
-	int i = 0;
-	int a,b;
+  FILE* f = fopen(input, "rt");
+  int i = 0;
+  int a,b;
 
-	while(!feof(f)) {
-		fscanf(f, "%d, %d\n", &a, &b);
-		tab[i].x = a;
-		tab[i].y = b;
-		i++;
-	}
+  while(!feof(f)) {
+    fscanf(f, "%d, %d\n", &a, &b);
+    tab[i].x = a;
+    tab[i].y = b;
+    i++;
+  }
 
-	fclose(f);
+  fclose(f);
 }
