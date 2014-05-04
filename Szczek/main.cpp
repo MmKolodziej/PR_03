@@ -71,10 +71,11 @@ int main (int argc, char **argv)
     readMap(mapa, allPoints);
   }
 
-  cout << "I'm Finder number " << rank << ". Now I'm waiting for instructions from Commander." << endl;
+  //Rozeslij po k lokalizacji do kazdego z poszukiwaczy
   MPI_Scatter(&allPoints, k, mapPoint, &points, k, mapPoint, 0, COMM_WORLD);
 
-  for(i = 0; i < k; i++)
+  cout << "I'm Finder number " << rank << ". Now I'm waiting for instructions from Commander." << endl;
+   for(i = 0; i < k; i++)
   {
     cout << "Finder " << rank << " checks a place " << i << ": " << pointToString(points[i]) << endl;
     if(found()) // Jeśli wrak jest, zwiększam wartość znalezionych wraków
@@ -88,8 +89,14 @@ int main (int argc, char **argv)
       points[i].y = 0;
     }
   }
+  
+  
+  MPI_Barrier(COMM_WORLD);
+  if (rank==0) {
+    cout<<"Wszyscy poszukiwacze wrocili. Podsumowuje poszukiwania..."<<endl;
+  }  
 
-  // Dowódca zbiera (sumuje) od Poszukiwaczy informacje o liczbie znalezionych wraków
+// Dowódca zbiera (sumuje) od Poszukiwaczy informacje o liczbie znalezionych wraków
   MPI_Reduce(&local_sum, &global_sum, 1, MPI_INT, MPI_SUM, 0, COMM_WORLD);
 
   // Dowódca zbiera od każdego Poszukiwacza k lokacji (wysłanych wcześniej), które zawierają informacje o istnieniu wraku
